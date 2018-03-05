@@ -128,8 +128,7 @@ std::vector<std::shared_ptr<Shape>> CreateTriangleMeshShape(
 
 bool WritePlyFile(const std::string &filename, int nTriangles,
                   const int *vertexIndices, int nVertices, const Point3f *P,
-                  const Vector3f *S, const Normal3f *N, const Point2f *UV,
-                  const int *faceIndices);
+                  const Vector3f *S, const Normal3f *N, const Point2f *UV);
 
 }  // namespace pbrt
 

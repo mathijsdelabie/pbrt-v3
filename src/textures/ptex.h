@@ -51,14 +51,13 @@ template <typename T>
 class PtexTexture : public Texture<T> {
   public:
     // PtexTexture Public Methods
-    PtexTexture(const std::string &filename, Float gamma);
+    PtexTexture(const std::string &filename);
     ~PtexTexture();
     T Evaluate(const SurfaceInteraction &) const;
 
   private:
     bool valid;
     const std::string filename;
-    const Float gamma;
 };
 
 PtexTexture<Float> *CreatePtexFloatTexture(const Transform &tex2world,

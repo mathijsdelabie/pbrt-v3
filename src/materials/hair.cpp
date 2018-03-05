@@ -335,6 +335,7 @@ std::array<Float, pMax + 1> HairBSDF::ComputeApPdf(Float cosThetaO) const {
     Float etap = std::sqrt(eta * eta - Sqr(sinThetaO)) / cosThetaO;
     Float sinGammaT = h / etap;
     Float cosGammaT = SafeSqrt(1 - Sqr(sinGammaT));
+    Float gammaT = SafeASin(sinGammaT);
 
     // Compute the transmittance _T_ of a single path through the cylinder
     Spectrum T = Exp(-sigma_a * (2 * cosGammaT / cosThetaT));
@@ -396,6 +397,7 @@ Spectrum HairBSDF::Sample_f(const Vector3f &wo, Vector3f *wi, const Point2f &u2,
     // Compute $\gammat$ for refracted ray
     Float etap = std::sqrt(eta * eta - Sqr(sinThetaO)) / cosThetaO;
     Float sinGammaT = h / etap;
+    Float cosGammaT = SafeSqrt(1 - Sqr(sinGammaT));
     Float gammaT = SafeASin(sinGammaT);
     Float dphi;
     if (p < pMax)
@@ -453,9 +455,14 @@ Float HairBSDF::Pdf(const Vector3f &wo, const Vector3f &wi) const {
     Float cosThetaI = SafeSqrt(1 - Sqr(sinThetaI));
     Float phiI = std::atan2(wi.z, wi.y);
 
+    // Compute $\cos \thetat$ for refracted ray
+    Float sinThetaT = sinThetaO / eta;
+    Float cosThetaT = SafeSqrt(1 - Sqr(sinThetaT));
+
     // Compute $\gammat$ for refracted ray
     Float etap = std::sqrt(eta * eta - Sqr(sinThetaO)) / cosThetaO;
     Float sinGammaT = h / etap;
+    Float cosGammaT = SafeSqrt(1 - Sqr(sinGammaT));
     Float gammaT = SafeASin(sinGammaT);
 
     // Compute PDF for $A_p$ terms

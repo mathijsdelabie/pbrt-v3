@@ -81,14 +81,14 @@ struct BoundEdge {
 };
 
 // KdTreeAccel Method Definitions
-KdTreeAccel::KdTreeAccel(std::vector<std::shared_ptr<Primitive>> p,
+KdTreeAccel::KdTreeAccel(const std::vector<std::shared_ptr<Primitive>> &p,
                          int isectCost, int traversalCost, Float emptyBonus,
                          int maxPrims, int maxDepth)
     : isectCost(isectCost),
       traversalCost(traversalCost),
       maxPrims(maxPrims),
       emptyBonus(emptyBonus),
-      primitives(std::move(p)) {
+      primitives(p) {
     // Build kd-tree for accelerator
     ProfilePhase _(Prof::AccelConstruction);
     nextFreeNode = nAllocedNodes = 0;
@@ -431,13 +431,13 @@ bool KdTreeAccel::IntersectP(const Ray &ray) const {
 }
 
 std::shared_ptr<KdTreeAccel> CreateKdTreeAccelerator(
-    std::vector<std::shared_ptr<Primitive>> prims, const ParamSet &ps) {
+    const std::vector<std::shared_ptr<Primitive>> &prims, const ParamSet &ps) {
     int isectCost = ps.FindOneInt("intersectcost", 80);
     int travCost = ps.FindOneInt("traversalcost", 1);
     Float emptyBonus = ps.FindOneFloat("emptybonus", 0.5f);
     int maxPrims = ps.FindOneInt("maxprims", 1);
     int maxDepth = ps.FindOneInt("maxdepth", -1);
-    return std::make_shared<KdTreeAccel>(std::move(prims), isectCost, travCost, emptyBonus,
+    return std::make_shared<KdTreeAccel>(prims, isectCost, travCost, emptyBonus,
                                          maxPrims, maxDepth);
 }
 

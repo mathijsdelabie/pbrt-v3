@@ -40,10 +40,12 @@
 
 // core/floatfile.h*
 #include "pbrt.h"
+#include "geometry.h"
 
 namespace pbrt {
 
 bool ReadFloatFile(const char *filename, std::vector<Float> *values);
+bool WriteFloatFile(const std::string &name, std::vector<Float> *values, Bounds2i bounds);
 
 }  // namespace pbrt
 

@@ -106,6 +106,27 @@ void StatsAccumulator::Print(FILE *dest) {
     fprintf(dest, "Statistics:\n");
     std::map<std::string, std::vector<std::string>> toPrint;
 
+    for (auto &cross : crossover) {
+    	if (cross.second == 0) continue;
+        std::string category, title;
+        getCategoryAndTitle(cross.first, &category, &title);
+
+        std::string crossStr;
+        if(cross.second == 1) crossStr = "One Point PSS";
+        else if(cross.second == 2) crossStr = "One Point Path";
+        else if(cross.second == 3) crossStr = "Copy Crossover";
+        else if(cross.second == 4) crossStr = "Arithmetic Crossover";
+        else if(cross.second == 5) crossStr = "Blend Crossover";
+        else crossStr = "Undefined";
+        toPrint[category].push_back(StringPrintf(
+        	"%-42s               %12s", title.c_str(), crossStr.c_str()));
+    }
+    for (auto &d : doubles) {
+        std::string category, title;
+        getCategoryAndTitle(d.first, &category, &title);
+        toPrint[category].push_back(StringPrintf(
+        "%-42s                %9.3f%%", title.c_str(), d.second));
+    }
     for (auto &counter : counters) {
         if (counter.second == 0) continue;
         std::string category, title;
@@ -187,6 +208,8 @@ void StatsAccumulator::Print(FILE *dest) {
 }
 
 void StatsAccumulator::Clear() {
+	crossover.clear();
+	doubles.clear();
     counters.clear();
     memoryCounters.clear();
     intDistributionSums.clear();
@@ -321,11 +344,14 @@ void ReportProfilerResults(FILE *dest) {
 
     PBRT_CONSTEXPR int NumProfCategories = (int)Prof::NumProfCategories;
     uint64_t overallCount = 0;
+    uint64_t eventCount[NumProfCategories] = {0};
     int used = 0;
     for (const ProfileSample &ps : profileSamples) {
         if (ps.count > 0) {
             overallCount += ps.count;
             ++used;
+            for (int b = 0; b < NumProfCategories; ++b)
+                if (ps.profilerState & (1ull << b)) eventCount[b] += ps.count;
         }
     }
     LOG(INFO) << "Used " << used << " / " << profileHashSize

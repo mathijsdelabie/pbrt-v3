@@ -88,9 +88,6 @@ void pbrtObjectEnd();
 void pbrtObjectInstance(const std::string &name);
 void pbrtWorldEnd();
 
-void pbrtParseFile(std::string filename);
-void pbrtParseString(std::string str);
-
 }  // namespace pbrt
 
 #endif  // PBRT_CORE_API_H

@@ -32,8 +32,10 @@
 
 // core/floatfile.cpp*
 #include "floatfile.h"
+#include "geometry.h"
 #include <ctype.h>
 #include <stdlib.h>
+#include <fstream>
 
 namespace pbrt {
 
@@ -79,6 +81,32 @@ bool ReadFloatFile(const char *filename, std::vector<Float> *values) {
     }
     fclose(f);
     return true;
+}
+
+bool WriteFloatFile(const std::string &name, std::vector<Float> *values, Bounds2i bounds) {
+	std::ofstream f;
+	const char* filename = &("results/"+name+".txt")[0];
+	f.open(filename);
+	if (!f.is_open()) {
+		Error("Unable to open file \"%s\"", filename);
+		return false;
+	}
+
+	Vector2<int> res = bounds.Diagonal();
+
+	f << "name: " << name << std::endl;
+	f << "res: " << res.x << " " << res.y << std::endl;
+
+	int rxs = res.x*3;
+	for (int i = 0; i < res.y; ++i) {
+		for (int j = 0; j < rxs; ++j) {
+			f << values->at(i*rxs + j) << " ";
+		}
+		f << std::endl;
+	}
+
+	f.close();
+	return true;
 }
 
 }  // namespace pbrt

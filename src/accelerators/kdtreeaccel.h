@@ -50,7 +50,7 @@ struct BoundEdge;
 class KdTreeAccel : public Aggregate {
   public:
     // KdTreeAccel Public Methods
-    KdTreeAccel(std::vector<std::shared_ptr<Primitive>> p,
+    KdTreeAccel(const std::vector<std::shared_ptr<Primitive>> &p,
                 int isectCost = 80, int traversalCost = 1,
                 Float emptyBonus = 0.5, int maxPrims = 1, int maxDepth = -1);
     Bounds3f WorldBound() const { return bounds; }
@@ -82,7 +82,7 @@ struct KdToDo {
 };
 
 std::shared_ptr<KdTreeAccel> CreateKdTreeAccelerator(
-    std::vector<std::shared_ptr<Primitive>> prims, const ParamSet &ps);
+    const std::vector<std::shared_ptr<Primitive>> &prims, const ParamSet &ps);
 
 }  // namespace pbrt
 

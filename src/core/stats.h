@@ -71,6 +71,12 @@ void ReportThreadStats();
 class StatsAccumulator {
   public:
     // StatsAccumulator Public Methods
+	void ReportCrossover(const std::string &name, int64_t val) {
+		crossover[name] += val;
+	}
+	void ReportDouble(const std::string &name, double val) {
+		doubles[name] = val;
+	}
     void ReportCounter(const std::string &name, int64_t val) {
         counters[name] += val;
     }
@@ -121,6 +127,8 @@ class StatsAccumulator {
 
   private:
     // StatsAccumulator Private Data
+    std::map<std::string, int64_t> crossover;
+    std::map<std::string, double> doubles;
     std::map<std::string, int64_t> counters;
     std::map<std::string, int64_t> memoryCounters;
     std::map<std::string, int64_t> intDistributionSums;
@@ -276,6 +284,20 @@ void ClearProfiler();
 void CleanupProfiler();
 
 // Statistics Macros
+#define STAT_CROSSOVER(title, var)                         \
+    static PBRT_THREAD_LOCAL int64_t var;				   \
+    static void STATS_FUNC##var(StatsAccumulator &accum) { \
+        accum.ReportCrossover(title, var);                 \
+        var = 0;                               			   \
+    }                                                      \
+    static StatRegisterer STATS_REG##var(STATS_FUNC##var)
+#define STAT_DOUBLE(title, var)                            \
+    static PBRT_THREAD_LOCAL double var;                   \
+    static void STATS_FUNC##var(StatsAccumulator &accum) { \
+        accum.ReportDouble(title, var);                    \
+        var = 0;                                           \
+    }                                                      \
+    static StatRegisterer STATS_REG##var(STATS_FUNC##var)
 #define STAT_COUNTER(title, var)                           \
     static PBRT_THREAD_LOCAL int64_t var;                  \
     static void STATS_FUNC##var(StatsAccumulator &accum) { \

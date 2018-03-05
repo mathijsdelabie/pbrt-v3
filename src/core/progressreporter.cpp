@@ -51,7 +51,8 @@ static int TerminalWidth();
 ProgressReporter::ProgressReporter(int64_t totalWork, const std::string &title)
     : totalWork(std::max((int64_t)1, totalWork)),
       title(title),
-      startTime(std::chrono::system_clock::now()) {
+      startTime(std::chrono::system_clock::now()),
+	  startClockTime(clock()){
     workDone = 0;
     exitThread = false;
     // Launch thread to periodically update progress bar
@@ -89,7 +90,7 @@ ProgressReporter::~ProgressReporter() {
 }
 
 void ProgressReporter::PrintBar() {
-    int barLength = TerminalWidth() - 28;
+    int barLength = TerminalWidth() - 48;
     int totalPlusses = std::max(2, barLength - (int)title.size());
     int plussesPrinted = 0;
 
@@ -136,12 +137,27 @@ void ProgressReporter::PrintBar() {
         Float seconds = ElapsedMS() / 1000.f;
         Float estRemaining = seconds / percentDone - seconds;
         if (percentDone == 1.f)
-            printf(" (%.1fs)       ", seconds);
+            printf(" (%.1fs)", seconds);
         else if (!std::isinf(estRemaining))
-            printf(" (%.1fs|%.1fs)  ", seconds,
+            printf(" (%.1fs|%.1fs)", seconds,
                    std::max((Float)0., estRemaining));
         else
-            printf(" (%.1fs|?s)  ", seconds);
+            printf(" (%.1fs|?s)", seconds);
+
+        // Update elapsed clock time and estimated time to completion
+        Float secondsClock = ElapsedClockMS() / 1000.f;
+        Float estRemainingClock = secondsClock / percentDone - secondsClock;
+        if (percentDone == 1.f)
+        	printf("\t(%.1fs)", secondsClock);
+        else if (!std::isinf(estRemainingClock))
+        	printf("\t(%.1fs|%.1fs)", secondsClock, std::max((Float)0., estRemainingClock));
+        else
+        	printf("\t(%.1fs|?s)", secondsClock);
+
+        if(percentDone == 1.f){
+            printf("\nEnd Times: %s: (%.1fs) (%.1fs)",title.c_str(),seconds,secondsClock);
+        }
+
         fflush(stdout);
     }
 }

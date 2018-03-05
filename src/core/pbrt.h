@@ -116,7 +116,6 @@ class SurfaceInteraction;
 class Shape;
 class Primitive;
 class GeometricPrimitive;
-class TransformedPrimitive;
 template <int nSpectrumSamples>
 class CoefficientSpectrum;
 class RGBSpectrum;
@@ -149,7 +148,7 @@ class VisibilityTester;
 class AreaLight;
 struct Distribution1D;
 class Distribution2D;
-//#define PBRT_FLOAT_AS_DOUBLE
+#define PBRT_FLOAT_AS_DOUBLE
 #ifdef PBRT_FLOAT_AS_DOUBLE
 typedef double Float;
 #else
@@ -165,19 +164,11 @@ class ParamSet;
 template <typename T>
 struct ParamSetItem;
 struct Options {
-    Options() {
-        cropWindow[0][0] = 0;
-        cropWindow[0][1] = 1;
-        cropWindow[1][0] = 0;
-        cropWindow[1][1] = 1;
-    }
     int nThreads = 0;
     bool quickRender = false;
     bool quiet = false;
     bool cat = false, toPly = false;
     std::string imageFile;
-    // x0, x1, y0, y1
-    Float cropWindow[2][2];
 };
 
 extern Options PbrtOptions;

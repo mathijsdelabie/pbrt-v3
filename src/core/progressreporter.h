@@ -44,6 +44,9 @@
 #include <chrono>
 #include <thread>
 
+#include <time.h>
+#include <sys/time.h>
+
 namespace pbrt {
 
 // ProgressReporter Declarations
@@ -65,6 +68,12 @@ class ProgressReporter {
                 .count();
         return (Float)elapsedMS;
     }
+    Float ElapsedClockMS() const {
+    	clock_t now = clock();
+    	double clocks_per_ms_per_core = CLOCKS_PER_SEC/1000;
+    	int64_t elapsedClockMS = (now - startClockTime)/clocks_per_ms_per_core;
+    	return (Float)elapsedClockMS;
+    }
     void Done();
 
   private:
@@ -75,6 +84,7 @@ class ProgressReporter {
     const int64_t totalWork;
     const std::string title;
     const std::chrono::system_clock::time_point startTime;
+    const clock_t startClockTime;
     std::atomic<int64_t> workDone;
     std::atomic<bool> exitThread;
     std::thread updateThread;

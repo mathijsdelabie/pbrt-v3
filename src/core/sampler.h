@@ -52,6 +52,8 @@ class Sampler {
     // Sampler Interface
     virtual ~Sampler();
     Sampler(int64_t samplesPerPixel);
+    Sampler(const Sampler &) = default;
+    Sampler(Sampler &&) = default;
     virtual void StartPixel(const Point2i &p);
     virtual Float Get1D() = 0;
     virtual Point2f Get2D() = 0;
