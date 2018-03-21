@@ -49,6 +49,7 @@
 namespace pbrt {
 
 STAT_CROSSOVER("General/Crossover", cross);
+STAT_DOUBLE("General/Alpha", alph);
 STAT_COUNTER("General/Max Depth", maxdepth);
 STAT_DOUBLE("General/Crossover Probability", crossProb);
 STAT_DOUBLE("General/Large Step Probability", largeStepProb);
@@ -518,6 +519,7 @@ void GMLTIntegrator::RegisterStatistics(int nTotalMutations, int nThreads){
 	threads = nThreads;
 	chains = nChains;
 	chainsPerThread = nChainsPerThread;
+	alph = alpha;
 }
 
 GMLTIntegrator *CreateGMLTIntegrator(const ParamSet &params,
@@ -536,12 +538,13 @@ GMLTIntegrator *CreateGMLTIntegrator(const ParamSet &params,
         nBootstrap = std::max(1, nBootstrap / 16);
     }
     std::string crossover = params.FindOneString("crossover","onepointpss");
+    Float alpha = params.FindOneFloat("alpha", 0.01f);
 
     return new GMLTIntegrator(camera, random, maxDepth, nBootstrap, nChains, nChainsPerThread,
-                             mutationsPerPixel, sigma, largeStepProbability, crossover, crossoverProbability);
+                             mutationsPerPixel, sigma, largeStepProbability, crossoverProbability, crossover, alpha);
 }
 
-std::shared_ptr<Crossover> CreateCrossover(std::string crossover){
+std::shared_ptr<Crossover> CreateCrossover(std::string crossover, Float alpha){
     std::shared_ptr<Crossover> c;
 
     if (crossover == "onepointpss") {
@@ -553,7 +556,7 @@ std::shared_ptr<Crossover> CreateCrossover(std::string crossover){
     } else if (crossover == "arithmetic") {
         c.reset(new ArithmeticCrossover());
     } else if (crossover == "blend") {
-        c.reset(new BlendCrossover());
+        c.reset(new BlendCrossover(alpha));
     }else {
         Error("Crossover \"%s\" unknown.", crossover.c_str());
     }
@@ -661,36 +664,40 @@ bool BlendCrossover::Use(Float u, GMLTSampler &s1, GMLTSampler &s2, Float &probF
 
         RNG rng(u);
         probFactor = 1;
-        Float sum = 0;
         for (int i = 0; i < s1.GetLength(); ++i) {
         	int i1, i2;
         	int stream1 = s1.GetStreamForIndex(i, i1);
         	int stream2 = s2.GetStreamForIndex(i, i2);
-        	Float g1 = rng.UniformFloat() - 0.5;
-        	Float g2 = rng.UniformFloat() - 0.5;
 
         	Float xi = s1.GetXi(stream1, i1);
         	Float xj = s2.GetXi(stream2, i2);
+        	Float yi = xi;
+        	Float yj = xj;
 
-        	Float yi = xi*(1-g1) + xj*g1;
-        	Float yj = xi*g2 + xj*(1-g2);
+        	//don't blend technique => skip i == 0 if depth > 0
+        	if (i != 0 || s1.GetDepth() == 0){
+    			Float g1 = 2*alpha*rng.UniformFloat() - alpha;
+    			Float g2 = 2*alpha*rng.UniformFloat() - alpha;
 
-        	yi = std::min( (Float) 1 , std::max( (Float) 0, yi) );
-        	yj = std::min( (Float) 1 , std::max( (Float) 0, yj) );
+				yi = xi*(1-g1) + xj*g1;
+				yj = xi*g2 + xj*(1-g2);
 
-        	if(yi > 1 || yi < 0 || yj > 1 || yj < 0 ){
-        		printf("yi: %f, yj: %f", yi, yj);
+				yi = std::min( (Float) 1 , std::max( (Float) 0, yi) );
+				yj = std::min( (Float) 1 , std::max( (Float) 0, yj) );
+
+				if(yi > 1 || yi < 0 || yj > 1 || yj < 0 ){
+					printf("yi: %f, yj: %f", yi, yj);
+				}
+				Float dx = std::abs(xi-xj);
+				Float dy = std::abs(yi-yj);
+				if(dx == 0 || dy == 0) probFactor *= 0;
+				else {
+					probFactor *= dy/dx;
+				}
         	}
 
         	s1.SetXi(stream1, i1, yi);
         	s2.SetXi(stream2, i2, yj);
-        	Float dx = std::abs(xi-xj);
-        	Float dy = std::abs(yi-yj);
-        	if(dx == 0 || dy == 0) probFactor *= 0;
-        	else {
-        		sum += g1 + g2;
-        		probFactor *= dy/dx;
-        	}
         }
 
         return true;

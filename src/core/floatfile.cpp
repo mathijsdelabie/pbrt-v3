@@ -35,7 +35,7 @@
 #include "geometry.h"
 #include <ctype.h>
 #include <stdlib.h>
-#include <fstream>
+#include <stdio.h>
 
 namespace pbrt {
 
@@ -84,28 +84,31 @@ bool ReadFloatFile(const char *filename, std::vector<Float> *values) {
 }
 
 bool WriteFloatFile(const std::string &name, std::vector<Float> *values, Bounds2i bounds) {
-	std::ofstream f;
-	const char* filename = &("results/"+name+".txt")[0];
-	f.open(filename);
-	if (!f.is_open()) {
-		Error("Unable to open file \"%s\"", filename);
+	std::string filename = name+".txt";
+	FILE *f = fopen(filename.c_str(), "w");
+	if (!f) {
+		Error("Unable to open file \"%s\"", filename.c_str());
 		return false;
 	}
 
 	Vector2<int> res = bounds.Diagonal();
 
-	f << "name: " << name << std::endl;
-	f << "res: " << res.x << " " << res.y << std::endl;
+	std::string s = "name: " + name + "\n";
+	fputs(s.c_str(),f);
+	s = "res: " + std::to_string(res.x) + " " + std::to_string(res.y) + "\n";
+	fputs(s.c_str(),f);
 
 	int rxs = res.x*3;
 	for (int i = 0; i < res.y; ++i) {
+		s = "";
 		for (int j = 0; j < rxs; ++j) {
-			f << values->at(i*rxs + j) << " ";
+			s += std::to_string(values->at(i*rxs + j)) + " ";
 		}
-		f << std::endl;
+		s += "\n";
+		fputs(s.c_str(),f);
 	}
 
-	f.close();
+	fclose(f);
 	return true;
 }
 

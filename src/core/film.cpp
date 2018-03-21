@@ -36,7 +36,7 @@
 #include "paramset.h"
 #include "imageio.h"
 #include "floatfile.h"
-#include "stats.h"
+#include <sys/stat.h>
 #include <cstdlib>
 
 namespace pbrt {
@@ -210,17 +210,16 @@ void Film::WriteImage(Float splatScale) {
     LOG(INFO) << "Writing image " << filename << " with bounds " <<
         croppedPixelBounds;
 
-	const int dir_err = system("mkdir -p results");
+	const int dir_err = mkdir("results", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 	if (-1 == dir_err)
 	{
 		printf("Error creating directory!\n");
-		exit(1);
 	}
 	size_t lastindex = filename.find_last_of(".");
 	std::string rawname;
 	if(lastindex != std::string::npos) rawname = filename.substr(0, lastindex);
 	else rawname = filename;
-	pbrt::WriteFloatFile(rawname, new std::vector<Float>(rgb.get(), rgb.get() + 3 * croppedPixelBounds.Area()), croppedPixelBounds);
+	pbrt::WriteFloatFile("results/"+rawname, new std::vector<Float>(rgb.get(), rgb.get() + 3 * croppedPixelBounds.Area()), croppedPixelBounds);
     pbrt::WriteImage("results/"+filename, &rgb[0], croppedPixelBounds, fullResolution);
 }
 

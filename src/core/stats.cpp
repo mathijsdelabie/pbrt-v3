@@ -125,7 +125,7 @@ void StatsAccumulator::Print(FILE *dest) {
         std::string category, title;
         getCategoryAndTitle(d.first, &category, &title);
         toPrint[category].push_back(StringPrintf(
-        "%-42s                %9.3f%%", title.c_str(), d.second));
+        "%-42s                %9.5f%%", title.c_str(), d.second));
     }
     for (auto &counter : counters) {
         if (counter.second == 0) continue;
@@ -205,6 +205,8 @@ void StatsAccumulator::Print(FILE *dest) {
         for (auto &item : categories.second)
             fprintf(dest, "    %s\n", item.c_str());
     }
+
+    fflush(stdout);
 }
 
 void StatsAccumulator::Clear() {

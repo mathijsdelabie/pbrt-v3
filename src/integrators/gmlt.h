@@ -197,11 +197,14 @@ public:
 
 class BlendCrossover : public Crossover{
 public:
+	BlendCrossover(Float alpha): alpha(alpha) {}
 	bool Use(Float u, GMLTSampler &sam1, GMLTSampler &sam2, Float &probFactor);
+private:
+	Float alpha;
 };
 
 //CreateCrossover
-std::shared_ptr<Crossover> CreateCrossover(std::string crossover);
+std::shared_ptr<Crossover> CreateCrossover(std::string crossover, Float alpha = 0);
 
 
 // GMLTCrossoverSampler Declarations
@@ -246,7 +249,7 @@ class GMLTIntegrator : public Integrator {
     // GMLTIntegrator Public Methods
     GMLTIntegrator(std::shared_ptr<const Camera> camera, bool random, int maxDepth,
                   int nBootstrap, int nChains, int nChainsPerThread, int mutationsPerPixel,
-                  Float sigma, Float largeStepProbability, std::string crossoverString, Float crossoverProbability)
+                  Float sigma, Float largeStepProbability, Float crossoverProbability, std::string crossoverString, Float alpha = 0)
         : camera(camera),
 		  random(random),
           maxDepth(maxDepth),
@@ -259,9 +262,10 @@ class GMLTIntegrator : public Integrator {
 		  crossoverProbability( ((nChainsPerThread/2.0) * crossoverProbability) / (1 + (nChainsPerThread/2.0 - 1) * crossoverProbability) ),
 		  actualLargeStepProbability(largeStepProbability),
 		  actualCrossoverProbability(crossoverProbability),
-  	  	  crossoverString(crossoverString)
+  	  	  crossoverString(crossoverString),
+  	  	  alpha(alpha)
 		  {
-			crossover = CreateCrossover(crossoverString);
+			crossover = CreateCrossover(crossoverString, alpha);
 		  }
     void Render(const Scene &scene);
     Spectrum L(const Scene &scene, MemoryArena &arena,
@@ -283,6 +287,7 @@ class GMLTIntegrator : public Integrator {
     const int mutationsPerPixel;
     const Float sigma, largeStepProbability, crossoverProbability, actualLargeStepProbability, actualCrossoverProbability;
     std::shared_ptr<Crossover> crossover;
+    const Float alpha;
     std::string crossoverString;
 };
 
