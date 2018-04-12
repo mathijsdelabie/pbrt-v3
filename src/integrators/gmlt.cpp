@@ -539,12 +539,13 @@ GMLTIntegrator *CreateGMLTIntegrator(const ParamSet &params,
     }
     std::string crossover = params.FindOneString("crossover","onepointpss");
     Float alpha = params.FindOneFloat("alpha", 0.01f);
+    bool blendtechnique = params.FindOneBool("blendtechnique", false);
 
     return new GMLTIntegrator(camera, random, maxDepth, nBootstrap, nChains, nChainsPerThread,
-                             mutationsPerPixel, sigma, largeStepProbability, crossoverProbability, crossover, alpha);
+                             mutationsPerPixel, sigma, largeStepProbability, crossoverProbability, crossover, alpha, blendtechnique);
 }
 
-std::shared_ptr<Crossover> CreateCrossover(std::string crossover, Float alpha){
+std::shared_ptr<Crossover> CreateCrossover(std::string crossover, Float alpha, bool blendtechnique){
     std::shared_ptr<Crossover> c;
 
     if (crossover == "onepointpss") {
@@ -556,7 +557,7 @@ std::shared_ptr<Crossover> CreateCrossover(std::string crossover, Float alpha){
     } else if (crossover == "arithmetic") {
         c.reset(new ArithmeticCrossover());
     } else if (crossover == "blend") {
-        c.reset(new BlendCrossover(alpha));
+        c.reset(new BlendCrossover(alpha, blendtechnique));
     }else {
         Error("Crossover \"%s\" unknown.", crossover.c_str());
     }
@@ -675,7 +676,7 @@ bool BlendCrossover::Use(Float u, GMLTSampler &s1, GMLTSampler &s2, Float &probF
         	Float yj = xj;
 
         	//don't blend technique => skip i == 0 if depth > 0
-        	if (i != 0 || s1.GetDepth() == 0){
+        	if (blendtechnique || i != 0 || s1.GetDepth() == 0){
     			Float g1 = 2*alpha*rng.UniformFloat() - alpha;
     			Float g2 = 2*alpha*rng.UniformFloat() - alpha;
 

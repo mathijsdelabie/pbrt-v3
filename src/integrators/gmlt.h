@@ -197,14 +197,15 @@ public:
 
 class BlendCrossover : public Crossover{
 public:
-	BlendCrossover(Float alpha): alpha(alpha) {}
+	BlendCrossover(Float alpha, bool blendtechnique): alpha(alpha), blendtechnique(blendtechnique) {}
 	bool Use(Float u, GMLTSampler &sam1, GMLTSampler &sam2, Float &probFactor);
 private:
 	Float alpha;
+	bool blendtechnique;
 };
 
 //CreateCrossover
-std::shared_ptr<Crossover> CreateCrossover(std::string crossover, Float alpha = 0);
+std::shared_ptr<Crossover> CreateCrossover(std::string crossover, Float alpha = 0, bool blendtechnique = false);
 
 
 // GMLTCrossoverSampler Declarations
@@ -249,7 +250,7 @@ class GMLTIntegrator : public Integrator {
     // GMLTIntegrator Public Methods
     GMLTIntegrator(std::shared_ptr<const Camera> camera, bool random, int maxDepth,
                   int nBootstrap, int nChains, int nChainsPerThread, int mutationsPerPixel,
-                  Float sigma, Float largeStepProbability, Float crossoverProbability, std::string crossoverString, Float alpha = 0)
+                  Float sigma, Float largeStepProbability, Float crossoverProbability, std::string crossoverString, Float alpha, bool blendtechnique)
         : camera(camera),
 		  random(random),
           maxDepth(maxDepth),
@@ -263,9 +264,10 @@ class GMLTIntegrator : public Integrator {
 		  actualLargeStepProbability(largeStepProbability),
 		  actualCrossoverProbability(crossoverProbability),
   	  	  crossoverString(crossoverString),
-  	  	  alpha(alpha)
+  	  	  alpha(alpha),
+		  blendtechnique(blendtechnique)
 		  {
-			crossover = CreateCrossover(crossoverString, alpha);
+			crossover = CreateCrossover(crossoverString, alpha, blendtechnique);
 		  }
     void Render(const Scene &scene);
     Spectrum L(const Scene &scene, MemoryArena &arena,
@@ -288,6 +290,7 @@ class GMLTIntegrator : public Integrator {
     const Float sigma, largeStepProbability, crossoverProbability, actualLargeStepProbability, actualCrossoverProbability;
     std::shared_ptr<Crossover> crossover;
     const Float alpha;
+    const bool blendtechnique;
     std::string crossoverString;
 };
 
