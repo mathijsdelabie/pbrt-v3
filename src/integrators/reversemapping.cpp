@@ -10,7 +10,7 @@
 
 namespace pbrt {
 
-	STAT_PERCENT("Integrator/Crossover visibility", invisibleInversions, totalInversions);
+	//STAT_PERCENT("Integrator/Crossover visibility", invisibleInversions, totalInversions);
 
 	ReverseMapping::ReverseMapping() = default;
 
@@ -64,8 +64,8 @@ namespace pbrt {
 	}
 
 	Point2f ReverseMapping::InverseConcentricSampleDisk(Vector3f &wi){
-		if(wi.z > 0) ++invisibleInversions;
-		++totalInversions;
+		//if(wi.z > 0) ++invisibleInversions;
+		//++totalInversions;
 		if(wi.x == 0 && wi.y == 0) return Point2f(0.5,0.5);
 
 		Vector3f v = Normalize(wi);
