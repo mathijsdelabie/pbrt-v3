@@ -204,7 +204,7 @@ bool GMLTCrossoverSampler::ExecCrossover(int* i, Float &probFactor) {
     Float u = rng.UniformFloat();
 
     bool didCrossover = false;
-    if(doCrossover){
+    if(doCrossover && s1.IsNoneZeroIteration() && s2.IsNoneZeroIteration()){
     	didCrossover = crossover.get()->Use(u, s1, s2, probFactor);
     }
     s1.SetCrossover(didCrossover);
@@ -340,7 +340,7 @@ void GMLTIntegrator::Render(const Scene &scene) {
     // Run _nChains_ Markov chains in parallel
     Film &film = *camera->film;
     int64_t nTotalMutations =
-        (int64_t)mutationsPerPixel * (int64_t)film.GetSampleBounds().Area();
+        (int64_t)mutationsPerPixel * film.fullResolution.x * film.fullResolution.y;
     if (scene.lights.size() > 0) {
         const int progressFrequency = 32768;
         ProgressReporter progress(nTotalMutations / progressFrequency,
@@ -353,7 +353,7 @@ void GMLTIntegrator::Render(const Scene &scene) {
         RegisterStatistics(nTotalMutations, nThreads);
 
         ParallelFor([&](int i) {
-        	int nThreadChains = std::min((i+1) * nChainsPerThread, nChains) - i * nChainsPerThread;
+        	int64_t nThreadChains = std::min((i+1) * nChainsPerThread, nChains) - i * nChainsPerThread;
         	int64_t nThreadMutations = std::min((i + 1) * nTotalMutations / nThreads, nTotalMutations) - i * nTotalMutations / nThreads;
         	int64_t todoMutations = nThreadMutations;
         	bool prevprogresscheck = false;
@@ -387,13 +387,14 @@ void GMLTIntegrator::Render(const Scene &scene) {
             	int crossoverIndices[2];
             	Float probFactor;
             	bool didCrossover = false;
-            	if (todoMutations > 1){
+            	if (todoMutations > nThreadChains) {
                 	didCrossover = sampler.ExecCrossover(crossoverIndices, probFactor);
             	}
 
+            	//Iterate over crossover chains
             	int mutationsDone = 0;
             	if(didCrossover){
-            		//Crossover
+            		//CROSSOVER
             		Point2f pProposed[2];
             	    Spectrum LProposed[2];
             	    Float acceptCross[2];
@@ -405,10 +406,10 @@ void GMLTIntegrator::Render(const Scene &scene) {
             	        acceptCross[k] = std::min((Float)1, (LProposed[k].y() / LCurrent[index].y()) * probFactor);
 
             	        // Splat both current and proposed samples to _film_
-            	        if (LProposed[k] == 0) {
-            	        	zeroCrossovers++;
-            	        	zeroProposals++;
-            	        }
+                        if (LProposed[k] == 0) {
+                        	zeroCrossovers++;
+                        	zeroProposals++;
+                        }
             	        if (acceptCross[k] > 0)
             	        	film.AddSplat(pProposed[k], LProposed[k] * acceptCross[k] / LProposed[k].y());
             	       	film.AddSplat(pCurrent[index], LCurrent[index] * (1 - acceptCross[k]) / LCurrent[index].y());
@@ -432,36 +433,38 @@ void GMLTIntegrator::Render(const Scene &scene) {
             	    mutationsDone = 2;
             	}
             	else{
-            		//Mutation
-            		int k = sampler.GetRandomSamplerIndex();
-            		Point2f pProposed;
-            		Spectrum LProposed = L(scene, arena, lightDistr, lightToIndex, sampler.GetSampler(k), depth, &pProposed);
+            		//MUTATIONS
+					//Iterate over all chains if no crossover
+					for (int k = 0; k < std::min(nThreadChains,todoMutations); ++k) {
+						Point2f pProposed;
+						Spectrum LProposed = L(scene, arena, lightDistr, lightToIndex, sampler.GetSampler(k), depth, &pProposed);
 
-            		// Compute acceptance probability for proposed sample
-            		Float accept = std::min((Float)1, LProposed.y() / LCurrent[k].y());
+						// Compute acceptance probability for proposed sample
+						Float accept = std::min((Float)1, LProposed.y() / LCurrent[k].y());
 
-            		// Splat both current and proposed samples to _film_
-        	        if (LProposed[k] == 0) {
-        	        	zeroProposals++;
-        	        }
-            		if (accept > 0)
-            			film.AddSplat(pProposed, LProposed * accept / LProposed.y());
-            		film.AddSplat(pCurrent[k], LCurrent[k] * (1 - accept) / LCurrent[k].y());
+						// Splat both current and proposed samples to _film_
+						if (LProposed[k] == 0) {
+							zeroProposals++;
+						}
+						if (accept > 0)
+							film.AddSplat(pProposed, LProposed * accept / LProposed.y());
+						film.AddSplat(pCurrent[k], LCurrent[k] * (1 - accept) / LCurrent[k].y());
 
-            		// Accept or reject the proposal
-            		if (rng.UniformFloat() < accept) {
-            			pCurrent[k] = pProposed;
-            			LCurrent[k] = LProposed;
-            			sampler.Accept(k);
-            			++acceptedMutations;
-            		} else{
-            			sampler.Reject(k);
-            		}
-					mutationsDone = 1;
+						// Accept or reject the proposal
+						if (rng.UniformFloat() < accept) {
+							pCurrent[k] = pProposed;
+							LCurrent[k] = LProposed;
+							sampler.Accept(k);
+							++acceptedMutations;
+						} else{
+							sampler.Reject(k);
+						}
+					}
+					mutationsDone = std::min(nThreadChains,todoMutations);
             	}
             	totalMutations += mutationsDone;
             	totalMutations2 += mutationsDone;
-            	totalProposals += mutationsDone;
+                totalProposals += mutationsDone;
             	todoMutations -= mutationsDone;
             	int mod = (i*nTotalMutations/nChains + (nThreadMutations - todoMutations)) % progressFrequency;
             	if ( !prevprogresscheck && mod < nThreadChains ){

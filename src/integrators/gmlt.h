@@ -231,7 +231,6 @@ class GMLTCrossoverSampler{
     void Reject(int index);
 
     GMLTSampler &GetSampler(int index) { return samplers.at(index); }
-    int GetRandomSamplerIndex() { return samplers.size()*rng.UniformFloat(); }
     bool ExecCrossover(int* i, Float &probFactor);
 
   protected:
@@ -261,7 +260,7 @@ class GMLTIntegrator : public Integrator {
           mutationsPerPixel(mutationsPerPixel),
           sigma(sigma),
           largeStepProbability(largeStepProbability/(1-crossoverProbability)),
-		  crossoverProbability( (crossoverProbability/2.0) / (1 - crossoverProbability/2.0) ),
+		  crossoverProbability( ((nChainsPerThread/2.0) * crossoverProbability) / (1 + (nChainsPerThread/2.0 - 1) * crossoverProbability) ),
 		  actualLargeStepProbability(largeStepProbability),
 		  actualCrossoverProbability(crossoverProbability),
   	  	  crossoverString(crossoverString),
